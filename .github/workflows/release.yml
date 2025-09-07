@@ -1,0 +1,162 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.1"
+
+      - name: get dependencies
+        run: go mod download
+
+      - name: build for Linux (amd64)
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o moodgit-linux-amd64 .
+
+      - name: build for Linux (arm64)
+        run: |
+          GOOS=linux GOARCH=arm64 go build -o moodgit-linux-arm64 .
+
+      - name: build for macOS (amd64)
+        run: |
+          GOOS=darwin GOARCH=amd64 go build -o moodgit-darwin-amd64 .
+
+      - name: build for macOS (arm64)
+        run: |
+          GOOS=darwin GOARCH=arm64 go build -o moodgit-darwin-arm64 .
+
+      - name: build for Windows (amd64)
+        run: |
+          GOOS=windows GOARCH=amd64 go build -o moodgit-windows-amd64.exe .
+
+      - name: build for Windows (arm64)
+        run: |
+          GOOS=windows GOARCH=arm64 go build -o moodgit-windows-arm64.exe .
+
+      - name: create checksums
+        run: |
+          sha256sum moodgit-* > checksums.txt
+
+      - name: extract tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          release_name: release ${{ steps.tag.outputs.tag }}
+          draft: false
+          prerelease: false
+          body: |
+            ## what's changed
+
+            please see the commit history for details.
+
+            ## download
+
+            download the appropriate binary for your platform:
+
+            - **Linux (x64)**: `moodgit-linux-amd64`
+            - **Linux (ARM64)**: `moodgit-linux-arm64`
+            - **macOS (Intel)**: `moodgit-darwin-amd64`
+            - **macOS (Apple Silicon)**: `moodgit-darwin-arm64`
+            - **Windows (x64)**: `moodgit-windows-amd64.exe`
+            - **Windows (ARM64)**: `moodgit-windows-arm64.exe`
+
+            ## installation
+
+            1. download the binary for your platform
+            2. make it executable (Linux/macOS): `chmod +x moodgit-*`
+            3. move to a directory in your PATH (optional)
+
+            ## verification
+
+            you can verify the integrity of downloaded files using the provided `checksums.txt`.
+
+      - name: upload Linux (amd64) binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./moodgit-linux-amd64
+          asset_name: moodgit-linux-amd64
+          asset_content_type: application/octet-stream
+
+      - name: upload Linux (arm64) binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./moodgit-linux-arm64
+          asset_name: moodgit-linux-arm64
+          asset_content_type: application/octet-stream
+
+      - name: upload macOS (amd64) binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./moodgit-darwin-amd64
+          asset_name: moodgit-darwin-amd64
+          asset_content_type: application/octet-stream
+
+      - name: upload macOS (arm64) binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./moodgit-darwin-arm64
+          asset_name: moodgit-darwin-arm64
+          asset_content_type: application/octet-stream
+
+      - name: upload Windows (amd64) binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./moodgit-windows-amd64.exe
+          asset_name: moodgit-windows-amd64.exe
+          asset_content_type: application/octet-stream
+
+      - name: upload Windows (arm64) binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./moodgit-windows-arm64.exe
+          asset_name: moodgit-windows-arm64.exe
+          asset_content_type: application/octet-stream
+
+      - name: upload checksums
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./checksums.txt
+          asset_name: checksums.txt
+          asset_content_type: text/plain
