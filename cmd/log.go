@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"moodgit/internal"
 
 	"github.com/spf13/cobra"
@@ -22,15 +23,26 @@ intensity for better visual representation.
 
 examples:
   moodgit log                  # show last 10 entries
-  moodgit log -l 20            # show last 20 entries`,
+  moodgit log -l 20            # show last 20 entries
+  moodgit log -i               # show interactive log with 10 entries per page
+  moodgit log -i -l 25         # show interactive log with 25 entries per page`,
 	Run: func(cmd *cobra.Command, args []string) {
 		limit, _ := cmd.Flags().GetUint16("limit")
-		internal.GetHistory(limit)
+		interactive, _ := cmd.Flags().GetBool("interactive")
+
+		if interactive {
+			if err := internal.StartInteractiveLog(int(limit)); err != nil {
+				fmt.Printf("error starting interactive log: %v\n", err)
+			}
+		} else {
+			internal.GetHistory(limit)
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(logCmd)
 
-	logCmd.Flags().Uint16P("limit", "l", 10, "number of entries to show")
+	logCmd.Flags().Uint16P("limit", "l", 10, "number of entries to show (page size for interactive mode)")
+	logCmd.Flags().BoolP("interactive", "i", false, "show interactive log with pagination")
 }
