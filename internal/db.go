@@ -2,6 +2,7 @@ package internal
 
 import (
 	"database/sql"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -9,6 +10,9 @@ import (
 
 	_ "modernc.org/sqlite"
 )
+
+//go:embed schema.sql
+var schemaFS embed.FS
 
 var db *sql.DB
 
@@ -31,7 +35,7 @@ func init() {
 }
 
 func migrate() error {
-	schemaBytes, err := os.ReadFile(path.Join("internal", "schema.sql"))
+	schemaBytes, err := schemaFS.ReadFile("schema.sql")
 	if err != nil {
 		return err
 	}
