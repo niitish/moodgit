@@ -25,6 +25,10 @@ examples:
   moodgit add -i 7 -o excited -t weekend,vacation
   moodgit add -a -i 9 -m "actually feeling even better!"`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := internal.InitDB(); err != nil {
+			return fmt.Errorf("%w", err)
+		}
+
 		intensity, _ := cmd.Flags().GetInt8("intensity")
 		mood, _ := cmd.Flags().GetString("mood")
 		message, _ := cmd.Flags().GetString("message")

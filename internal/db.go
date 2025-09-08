@@ -17,22 +17,24 @@ var schemaFS embed.FS
 
 var db *sql.DB
 
-func init() {
+func InitDB() error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to get home directory: %w", err)
 	}
 
 	dbPath := path.Join(homeDir, ".moodgit", "moodgit.db")
 	db, err = sql.Open("sqlite", dbPath)
 
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to open database.\ndid you run moodgit init?\n%w", err)
 	}
 
 	if err := migrate(); err != nil {
-		panic(err)
+		return fmt.Errorf("failed to migrate database.\ndid you run moodgit init?\n%w", err)
 	}
+
+	return nil
 }
 
 func migrate() error {

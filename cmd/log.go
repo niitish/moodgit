@@ -26,17 +26,23 @@ examples:
   moodgit log -l 20            # show last 20 entries
   moodgit log -i               # show interactive log with 10 entries per page
   moodgit log -i -l 25         # show interactive log with 25 entries per page`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := internal.InitDB(); err != nil {
+			return fmt.Errorf("%w", err)
+		}
+
 		limit, _ := cmd.Flags().GetUint16("limit")
 		interactive, _ := cmd.Flags().GetBool("interactive")
 
 		if interactive {
 			if err := internal.StartInteractiveLog(int(limit)); err != nil {
-				fmt.Printf("error starting interactive log: %v\n", err)
+				return fmt.Errorf("error starting interactive log: %w", err)
 			}
 		} else {
-			internal.GetHistory(limit)
+			return internal.GetHistory(limit)
 		}
+
+		return nil
 	},
 }
 

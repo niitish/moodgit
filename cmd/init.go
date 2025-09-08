@@ -27,7 +27,6 @@ examples:
   moodgit init                 # initialize a new repository
   moodgit init --force         # reinitialize and reset all data`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		// show ascii art
 		fmt.Println()
 		color.C256(201).Println("█▀▄▀█ ████▄ ████▄ ██▄     ▄▀  ▄█    ▄▄▄▄▀")
